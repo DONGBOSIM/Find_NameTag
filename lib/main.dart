@@ -39,7 +39,6 @@ class BadmintonNamecardFinderApp extends StatelessWidget {
           primary: Color(0xFF00E5FF),
           secondary: Color(0xFF00FF88),
           surface: Color(0xFF1E222B),
-          background: Color(0xFF121418),
           error: Colors.redAccent,
         ),
         appBarTheme: const AppBarTheme(

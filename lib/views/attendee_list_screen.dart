@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/attendee.dart';
 import '../providers/attendees_provider.dart';
 import '../widgets/attendee_chip.dart';
 import 'board_scan_screen.dart';

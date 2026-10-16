@@ -20,8 +20,6 @@ class AttendeeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     // 1. 상태별 색상 및 스타일 결정
     Color backgroundColor;
     Color borderColor;
@@ -78,10 +76,8 @@ class AttendeeChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: textColor),
-                const SizedBox(width: 5),
-              ],
+              Icon(icon, size: 16, color: textColor),
+              const SizedBox(width: 5),
               Text(
                 attendee.name,
                 style: TextStyle(

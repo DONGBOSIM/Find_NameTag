@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/attendee.dart';
 import '../providers/attendees_provider.dart';
 import 'attendee_list_screen.dart';
 import 'board_scan_screen.dart';
