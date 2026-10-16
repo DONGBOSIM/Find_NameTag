@@ -203,7 +203,7 @@ class BoundingBoxPainter extends CustomPainter {
   }
 
   /// 캔버스 상의 터치 좌표가 어떤 네임카드 영역에 속하는지 판정하는 히트테스트 헬퍼
-  static NameCardMatch? hitTest({
+  static NameCardMatch? findHitMatch({
     required Offset localPosition,
     required Size canvasSize,
     required Size imageSize,

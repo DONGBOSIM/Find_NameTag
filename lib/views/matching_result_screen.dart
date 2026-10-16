@@ -38,7 +38,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
     List<NameCardMatch> matches,
   ) {
     final localPosition = details.localPosition;
-    final hitMatch = BoundingBoxPainter.hitTest(
+    final hitMatch = BoundingBoxPainter.findHitMatch(
       localPosition: localPosition,
       canvasSize: canvasSize,
       imageSize: imageSize,
