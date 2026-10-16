@@ -39,10 +39,14 @@ class AttendeeParserService {
     String imagePath, {
     Set<String> blacklist = defaultBlacklist,
   }) async {
-    final inputImage = InputImage.fromFilePath(imagePath);
-    final RecognizedText recognizedText = await _recognizer.processImage(inputImage);
-
-    return parseFromRecognizedText(recognizedText, blacklist: blacklist);
+    final recognizer = TextRecognizer(script: TextRecognitionScript.korean);
+    try {
+      final inputImage = InputImage.fromFilePath(imagePath);
+      final RecognizedText recognizedText = await recognizer.processImage(inputImage);
+      return parseFromRecognizedText(recognizedText, blacklist: blacklist);
+    } finally {
+      await recognizer.close();
+    }
   }
 
   /// ML Kit RecognizedText 객체로부터 참석자 이름 목록 추출
