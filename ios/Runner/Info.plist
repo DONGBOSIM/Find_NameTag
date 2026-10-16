@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>배드민턴 명찰 찾기</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>find_nametag</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- 카메라 권한: 배드민턴 매칭판 직접 촬영 -->
+	<key>NSCameraUsageDescription</key>
+	<string>체육관 배드민턴 매칭판을 촬영하고 참석자의 자석 명찰 위치를 인식하기 위해 카메라 권한이 필요합니다.</string>
+
+	<!-- 사진 보관함 접근 권한: 참석자 투표 캡처본 및 보드판 이미지 로드 -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>동호회 투표/공지 참석자 캡처본 및 매칭판 사진을 선택하기 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
+
+	<!-- 사진 보관함 추가 권한: 결과 이미지 저장 -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>인식된 매칭 결과 화면을 사진 라이브러리에 저장하기 위해 권한이 필요합니다.</string>
+
+	<!-- 마이크 권한 (카메라 플러그인 초기화 시 필요할 수 있음) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>카메라 기능 사용 시 오디오 권한 요청을 방지하기 위한 선택적 권한입니다.</string>
+</dict>
+</plist>
