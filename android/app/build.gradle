@@ -25,7 +25,7 @@ if (flutterVersionName == null) {
 android {
     namespace "com.example.find_nametag"
     compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -42,7 +42,6 @@ android {
 
     defaultConfig {
         applicationId "com.example.find_nametag"
-        // ML Kit requires at least minSdkVersion 21
         minSdkVersion 21
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
@@ -52,6 +51,10 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            // ML Kit의 선택적 언어 모델 R8 누락 검사 충돌 방지
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
