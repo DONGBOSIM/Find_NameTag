@@ -2,15 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.find_nametag">
 
-    <!-- 카메라 권한: 배드민턴 매칭판 직접 촬영용 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
-    <!-- 갤러리 및 저장소 접근 권한: 참석자 투표 캡처본 및 보드판 사진 로드 -->
-    <!-- Android 13 (API 33) 이상 -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- Android 12 이하 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission 
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
@@ -20,7 +16,7 @@
     <application
         android:label="배드민턴 명찰 찾기"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@android:drawable/sym_def_app_icon">
 
         <!-- Google ML Kit 온디바이스 모델 다운로드 선언: OCR 기본 및 한글 모델 자동 로드 -->
         <meta-data
@@ -31,14 +27,10 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
