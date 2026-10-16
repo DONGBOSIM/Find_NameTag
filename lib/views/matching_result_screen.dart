@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/attendee.dart';
 import '../models/board_scan_result.dart';
 import '../models/name_card_match.dart';
 import '../providers/attendees_provider.dart';
