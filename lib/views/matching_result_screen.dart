@@ -24,6 +24,9 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
   final TransformationController _transformationController = TransformationController();
   String? _selectedMatchId;
 
+  /// 매칭률(%) 표시 여부 (기본값: false - 위치 색상 우선 표시, 겹침 방지)
+  bool _showSimilarity = false;
+
   @override
   void dispose() {
     _transformationController.dispose();
@@ -53,6 +56,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
       });
 
       final isNowChecked = !hitMatch.isChecked;
+      final similarityText = ' (매칭률 ${(hitMatch.similarity * 100).toInt()}%)';
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -60,8 +64,8 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
           backgroundColor: isNowChecked ? const Color(0xFF37474F) : const Color(0xFF00E5FF),
           content: Text(
             isNowChecked
-                ? '🏸 "${hitMatch.attendeeName}" 님 명찰 코트 배치 완료 (체크)'
-                : '↩ "${hitMatch.attendeeName}" 님 명찰 체크 취소',
+                ? '🏸 "${hitMatch.attendeeName}"$similarityText 코트 배치 완료 (체크)'
+                : '↩ "${hitMatch.attendeeName}"$similarityText 체크 취소',
             style: TextStyle(
               color: isNowChecked ? Colors.white : Colors.black,
               fontWeight: FontWeight.bold,
@@ -107,6 +111,20 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
           ),
         ),
         actions: [
+          // 매칭률(%) 표시 토글 버튼
+          IconButton(
+            tooltip: _showSimilarity ? '매칭률 숨기기' : '매칭률(%) 표시',
+            icon: Icon(
+              Icons.percent,
+              color: _showSimilarity ? const Color(0xFF00E5FF) : Colors.white70,
+            ),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _showSimilarity = !_showSimilarity;
+              });
+            },
+          ),
           IconButton(
             tooltip: '매칭판 다시 촬영',
             icon: const Icon(Icons.camera_alt_outlined, color: Color(0xFF00FF88)),
@@ -146,51 +164,116 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
             child: ClipRect(
               child: Container(
                 color: Colors.black,
-                child: InteractiveViewer(
-                  transformationController: _transformationController,
-                  minScale: 0.8,
-                  maxScale: 6.0,
-                  boundaryMargin: const EdgeInsets.all(40),
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: result.imageAspectRatio,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final canvasSize = Size(
-                            constraints.maxWidth,
-                            constraints.maxHeight,
-                          );
+                child: Stack(
+                  children: [
+                    InteractiveViewer(
+                      transformationController: _transformationController,
+                      minScale: 0.8,
+                      maxScale: 6.0,
+                      boundaryMargin: const EdgeInsets.all(40),
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: result.imageAspectRatio,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final canvasSize = Size(
+                                constraints.maxWidth,
+                                constraints.maxHeight,
+                              );
 
-                          return Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // 원본 이미지 렌더링
-                              _buildBoardImage(result.imagePath),
+                              return Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  // 원본 이미지 렌더링
+                                  _buildBoardImage(result.imagePath),
 
-                              // 바운딩 박스 및 터치 감지 오버레이
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTapUp: (details) => _handleCanvasTap(
-                                  details,
-                                  canvasSize,
-                                  imageSize,
-                                  result.matches,
-                                ),
-                                child: CustomPaint(
-                                  size: canvasSize,
-                                  painter: BoundingBoxPainter(
-                                    matches: result.matches,
-                                    imageSize: imageSize,
-                                    selectedMatchId: _selectedMatchId,
+                                  // 바운딩 박스 및 터치 감지 오버레이
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTapUp: (details) => _handleCanvasTap(
+                                      details,
+                                      canvasSize,
+                                      imageSize,
+                                      result.matches,
+                                    ),
+                                    child: CustomPaint(
+                                      size: canvasSize,
+                                      painter: BoundingBoxPainter(
+                                        matches: result.matches,
+                                        imageSize: imageSize,
+                                        selectedMatchId: _selectedMatchId,
+                                        showSimilarity: _showSimilarity,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                                ],
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+
+                    // 우상단 플로팅 퀵 토글 버튼 (매칭률 ON/OFF 전환)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _showSimilarity = !_showSimilarity;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: _showSimilarity
+                                  ? const Color(0xFF00E5FF)
+                                  : const Color(0xD91E222B),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _showSimilarity
+                                    ? const Color(0xFF00E5FF)
+                                    : const Color(0xFF00E5FF).withOpacity(0.5),
+                                width: 1.2,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black45,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.percent,
+                                  size: 14,
+                                  color: _showSimilarity ? Colors.black : const Color(0xFF00E5FF),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _showSimilarity ? '매칭률 숨김' : '매칭률(%) 표시',
+                                  style: TextStyle(
+                                    color: _showSimilarity ? Colors.black : Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -356,6 +439,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
                     return AttendeeChip(
                       attendee: attendee,
                       isSelected: _selectedMatchId == match.id,
+                      showSimilarity: _showSimilarity,
                       onTap: () {
                         HapticFeedback.selectionClick();
                         ref

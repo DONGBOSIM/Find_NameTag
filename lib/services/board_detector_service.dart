@@ -45,7 +45,13 @@ class BoardDetectorService {
     final imageSize = await _getImageSize(imagePath);
 
     // 2. ML Kit 온디바이스 한글 OCR 실행
-    final RecognizedText recognizedText = await _recognizer.processImage(inputImage);
+    final recognizer = TextRecognizer(script: TextRecognitionScript.korean);
+    RecognizedText recognizedText;
+    try {
+      recognizedText = await recognizer.processImage(inputImage);
+    } finally {
+      await recognizer.close();
+    }
 
     // 3. 매칭판에서 감지된 모든 텍스트 라인 및 바운딩 박스 수집
     final List<TextLine> allLines = [];

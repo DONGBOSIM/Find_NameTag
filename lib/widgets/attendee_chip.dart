@@ -8,6 +8,7 @@ class AttendeeChip extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isSelected;
   final bool showDeleteButton;
+  final bool showSimilarity;
 
   const AttendeeChip({
     super.key,
@@ -16,12 +17,11 @@ class AttendeeChip extends StatelessWidget {
     this.onDelete,
     this.isSelected = false,
     this.showDeleteButton = false,
+    this.showSimilarity = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     // 1. 상태별 색상 및 스타일 결정
     Color backgroundColor;
     Color borderColor;
@@ -78,10 +78,8 @@ class AttendeeChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: textColor),
-                const SizedBox(width: 5),
-              ],
+              Icon(icon, size: 16, color: textColor),
+              const SizedBox(width: 5),
               Text(
                 attendee.name,
                 style: TextStyle(
@@ -93,7 +91,8 @@ class AttendeeChip extends StatelessWidget {
                   decorationColor: Colors.grey.shade400,
                 ),
               ),
-              if (attendee.similarity != null &&
+              if (showSimilarity &&
+                  attendee.similarity != null &&
                   attendee.similarity! < 0.99 &&
                   !attendee.isChecked) ...[
                 const SizedBox(width: 4),

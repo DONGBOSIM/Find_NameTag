@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../models/name_card_match.dart';
 
@@ -14,10 +13,14 @@ class BoundingBoxPainter extends CustomPainter {
   /// 현재 선택/강조된 네임카드 ID
   final String? selectedMatchId;
 
+  /// 매칭률(%) 표시 여부 (기본값: false - 위치 색상 우선 표시)
+  final bool showSimilarity;
+
   BoundingBoxPainter({
     required this.matches,
     required this.imageSize,
     this.selectedMatchId,
+    this.showSimilarity = false,
   });
 
   @override
@@ -59,14 +62,14 @@ class BoundingBoxPainter extends CustomPainter {
     final Color strokeColor =
         isSelected ? const Color(0xFFFF9100) : const Color(0xFF00E5FF);
     final Color fillColor =
-        isSelected ? const Color(0x33FF9100) : const Color(0x2200E5FF);
+        isSelected ? const Color(0x33FF9100) : const Color(0x1800E5FF);
 
-    // 내부 반투명 채우기
+    // 내부 반투명 채우기 (자석 이름이 훤히 보이도록 옅게 처리)
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(5)),
       fillPaint,
     );
 
@@ -74,29 +77,29 @@ class BoundingBoxPainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = strokeColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 3.5 : 2.5;
+      ..strokeWidth = isSelected ? 3.2 : 2.2;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(5)),
       strokePaint,
     );
 
     // 모서리 펄스 효과 (시각적 고급스러움)
     final glowPaint = Paint()
-      ..color = strokeColor.withOpacity(0.4)
+      ..color = strokeColor.withOpacity(0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 6.0 : 4.5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+      ..strokeWidth = isSelected ? 5.5 : 4.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(5)),
       glowPaint,
     );
 
-    // 2. 상단 이름 라벨 배지 렌더링
+    // 2. 상단 이름 라벨 배지 렌더링 (showSimilarity가 true일 때만 퍼센트 포함)
     _paintNameBadge(
       canvas: canvas,
       rect: rect,
       title: match.attendeeName,
-      subtitle: match.similarity < 0.99
+      subtitle: (showSimilarity && match.similarity < 0.99)
           ? '${(match.similarity * 100).toInt()}%'
           : null,
       bgColor: strokeColor,
@@ -111,7 +114,7 @@ class BoundingBoxPainter extends CustomPainter {
       ..color = const Color(0xAA424242)
       ..style = PaintingStyle.fill;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(5)),
       fillPaint,
     );
 
@@ -121,7 +124,7 @@ class BoundingBoxPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(5)),
       strokePaint,
     );
 
@@ -130,7 +133,7 @@ class BoundingBoxPainter extends CustomPainter {
       canvas: canvas,
       rect: rect,
       title: '✓ ${match.attendeeName}',
-      subtitle: '완료',
+      subtitle: showSimilarity ? '완료' : null,
       bgColor: const Color(0xFF616161),
       textColor: Colors.white,
     );
@@ -151,7 +154,7 @@ class BoundingBoxPainter extends CustomPainter {
           text: title,
           style: TextStyle(
             color: textColor,
-            fontSize: 12.0,
+            fontSize: 11.0,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -160,9 +163,9 @@ class BoundingBoxPainter extends CustomPainter {
           TextSpan(
             text: subtitle,
             style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 10.0,
-              fontWeight: FontWeight.w500,
+              color: textColor.withOpacity(0.85),
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -174,14 +177,14 @@ class BoundingBoxPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    const double paddingH = 6.0;
-    const double paddingV = 2.0;
+    const double paddingH = 5.0;
+    const double paddingV = 1.5;
     final double badgeWidth = textPainter.width + paddingH * 2;
     final double badgeHeight = textPainter.height + paddingV * 2;
 
-    // 배지 위치: 박스 상단 위에 올리되, 화면 위로 벗어나면 박스 내부 상단에 배치
+    // 배지 위치: 박스 상단에 컴팩트하게 밀착
     double badgeLeft = rect.left;
-    double badgeTop = rect.top - badgeHeight - 4;
+    double badgeTop = rect.top - badgeHeight - 2;
     if (badgeTop < 0) {
       badgeTop = rect.top + 2;
     }
@@ -192,7 +195,7 @@ class BoundingBoxPainter extends CustomPainter {
       ..color = bgColor
       ..style = PaintingStyle.fill;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(badgeRect, const Radius.circular(3)),
       badgeBgPaint,
     );
 
@@ -235,6 +238,7 @@ class BoundingBoxPainter extends CustomPainter {
   bool shouldRepaint(covariant BoundingBoxPainter oldDelegate) {
     return oldDelegate.matches != matches ||
         oldDelegate.selectedMatchId != selectedMatchId ||
-        oldDelegate.imageSize != imageSize;
+        oldDelegate.imageSize != imageSize ||
+        oldDelegate.showSimilarity != showSimilarity;
   }
 }
