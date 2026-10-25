@@ -8,6 +8,7 @@ class AttendeeChip extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isSelected;
   final bool showDeleteButton;
+  final bool showSimilarity;
 
   const AttendeeChip({
     super.key,
@@ -16,6 +17,7 @@ class AttendeeChip extends StatelessWidget {
     this.onDelete,
     this.isSelected = false,
     this.showDeleteButton = false,
+    this.showSimilarity = false,
   });
 
   @override
@@ -89,7 +91,8 @@ class AttendeeChip extends StatelessWidget {
                   decorationColor: Colors.grey.shade400,
                 ),
               ),
-              if (attendee.similarity != null &&
+              if (showSimilarity &&
+                  attendee.similarity != null &&
                   attendee.similarity! < 0.99 &&
                   !attendee.isChecked) ...[
                 const SizedBox(width: 4),

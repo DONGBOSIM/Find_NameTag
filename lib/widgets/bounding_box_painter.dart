@@ -13,10 +13,14 @@ class BoundingBoxPainter extends CustomPainter {
   /// 현재 선택/강조된 네임카드 ID
   final String? selectedMatchId;
 
+  /// 매칭률(%) 표시 여부 (기본값: false - 위치 색상 우선 표시)
+  final bool showSimilarity;
+
   BoundingBoxPainter({
     required this.matches,
     required this.imageSize,
     this.selectedMatchId,
+    this.showSimilarity = false,
   });
 
   @override
@@ -47,102 +51,107 @@ class BoundingBoxPainter extends CustomPainter {
     }
   }
 
-  /// 활성(미체크) 상태 네임카드: 선명한 형광 네온 테두리 및 뱃지
+  /// 활성(미체크) 상태 네임카드: 네임태그 영역 바로 위에 이름을 덮어써서 렌더링
   void _paintActiveBox(
     Canvas canvas,
     Rect rect,
     NameCardMatch match,
     bool isSelected,
   ) {
-    // 1. 네온 하이라이트 색상 (선택 시 오렌지 네온, 기본은 민트/라임 네온)
-    final Color strokeColor =
+    // 선택 시 오렌지, 기본은 선명한 민트/형광 시안
+    final Color bgColor =
         isSelected ? const Color(0xFFFF9100) : const Color(0xFF00E5FF);
-    final Color fillColor =
-        isSelected ? const Color(0x33FF9100) : const Color(0x2200E5FF);
+    final Color borderColor =
+        isSelected ? const Color(0xFFFFD54F) : const Color(0xFF00B0FF);
 
-    // 내부 반투명 채우기
-    final fillPaint = Paint()
-      ..color = fillColor
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-      fillPaint,
-    );
-
-    // 형광 외곽선
-    final strokePaint = Paint()
-      ..color = strokeColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 3.5 : 2.5;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-      strokePaint,
-    );
-
-    // 모서리 펄스 효과 (시각적 고급스러움)
-    final glowPaint = Paint()
-      ..color = strokeColor.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 6.0 : 4.5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-      glowPaint,
-    );
-
-    // 2. 상단 이름 라벨 배지 렌더링
-    _paintNameBadge(
+    _paintDirectNameOverlay(
       canvas: canvas,
       rect: rect,
       title: match.attendeeName,
-      subtitle: match.similarity < 0.99
+      subtitle: (showSimilarity && match.similarity < 0.99)
           ? '${(match.similarity * 100).toInt()}%'
           : null,
-      bgColor: strokeColor,
+      bgColor: bgColor,
+      borderColor: borderColor,
       textColor: Colors.black,
+      isSelected: isSelected,
     );
   }
 
-  /// 체크 완료된 상태: 회색 반투명 오버레이 및 체크마크
+  /// 체크 완료된 상태: 차분한 회색 오버레이 및 체크마크
   void _paintCheckedBox(Canvas canvas, Rect rect, NameCardMatch match) {
-    // 회색 반투명 채우기
-    final fillPaint = Paint()
-      ..color = const Color(0xAA424242)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-      fillPaint,
-    );
-
-    // 점선 테두리 대용 회색 선
-    final strokePaint = Paint()
-      ..color = const Color(0xFFBDBDBD)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-      strokePaint,
-    );
-
-    // 체크 완료 라벨 배지
-    _paintNameBadge(
+    _paintDirectNameOverlay(
       canvas: canvas,
       rect: rect,
       title: '✓ ${match.attendeeName}',
-      subtitle: '완료',
-      bgColor: const Color(0xFF616161),
+      subtitle: showSimilarity ? '완료' : null,
+      bgColor: const Color(0xFF455A64),
+      borderColor: const Color(0xFF78909C),
       textColor: Colors.white,
+      isSelected: false,
     );
   }
 
-  /// 바운딩 박스 위/안에 참석자 이름 및 유사도 pill 배지 렌더링
-  void _paintNameBadge({
+  /// 네임카드 영역(rect) 바로 위에 배경과 이름을 직접 덮어쓰는 렌더러
+  void _paintDirectNameOverlay({
     required Canvas canvas,
     required Rect rect,
     required String title,
     String? subtitle,
     required Color bgColor,
+    required Color borderColor,
     required Color textColor,
+    required bool isSelected,
+  }) {
+    // 기존 네임태그 인쇄 글자를 완전히 덮을 수 있도록 미세 여백 확장 (+2px)
+    final Rect overlayRect = rect.inflate(2.0);
+    final rrect = RRect.fromRectAndRadius(overlayRect, const Radius.circular(4.0));
+
+    // 1. 네임태그 위 덮어쓰기 배경 (불투명도 0.96으로 기존 인쇄 글자를 깔끔하게 가림)
+    final bgPaint = Paint()
+      ..color = bgColor.withOpacity(0.96)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(rrect, bgPaint);
+
+    // 2. 외곽선 테두리
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isSelected ? 2.0 : 1.0;
+    canvas.drawRRect(rrect, borderPaint);
+
+    // 3. 텍스트 레이아웃 계산 (높이에 맞춰 폰트 크기 동적 조절)
+    double fontSize = (overlayRect.height * 0.65).clamp(11.0, 16.0);
+
+    TextPainter textPainter = _createTextPainter(
+      title: title,
+      subtitle: subtitle,
+      textColor: textColor,
+      fontSize: fontSize,
+    );
+
+    // 네임카드 너비를 초과하면 폰트 크기를 자동 축소하여 한 줄에 맞춤
+    if (textPainter.width > overlayRect.width - 4.0 && fontSize > 9.0) {
+      fontSize = (fontSize * ((overlayRect.width - 4.0) / textPainter.width)).clamp(9.0, fontSize);
+      textPainter = _createTextPainter(
+        title: title,
+        subtitle: subtitle,
+        textColor: textColor,
+        fontSize: fontSize,
+      );
+    }
+
+    // 4. 네임카드 정중앙에 텍스트 페인팅 (이웃 명찰을 전혀 침범하지 않음)
+    final double textX = overlayRect.left + (overlayRect.width - textPainter.width) / 2;
+    final double textY = overlayRect.top + (overlayRect.height - textPainter.height) / 2;
+    textPainter.paint(canvas, Offset(textX, textY));
+  }
+
+  TextPainter _createTextPainter({
+    required String title,
+    String? subtitle,
+    required Color textColor,
+    required double fontSize,
   }) {
     final textSpan = TextSpan(
       children: [
@@ -150,8 +159,9 @@ class BoundingBoxPainter extends CustomPainter {
           text: title,
           style: TextStyle(
             color: textColor,
-            fontSize: 12.0,
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
           ),
         ),
         if (subtitle != null) ...[
@@ -159,46 +169,19 @@ class BoundingBoxPainter extends CustomPainter {
           TextSpan(
             text: subtitle,
             style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 10.0,
-              fontWeight: FontWeight.w500,
+              color: textColor.withOpacity(0.85),
+              fontSize: (fontSize * 0.78).clamp(8.5, 12.0),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ],
     );
 
-    final textPainter = TextPainter(
+    return TextPainter(
       text: textSpan,
       textDirection: TextDirection.ltr,
     )..layout();
-
-    const double paddingH = 6.0;
-    const double paddingV = 2.0;
-    final double badgeWidth = textPainter.width + paddingH * 2;
-    final double badgeHeight = textPainter.height + paddingV * 2;
-
-    // 배지 위치: 박스 상단 위에 올리되, 화면 위로 벗어나면 박스 내부 상단에 배치
-    double badgeLeft = rect.left;
-    double badgeTop = rect.top - badgeHeight - 4;
-    if (badgeTop < 0) {
-      badgeTop = rect.top + 2;
-    }
-
-    final badgeRect = Rect.fromLTWH(badgeLeft, badgeTop, badgeWidth, badgeHeight);
-
-    final badgeBgPaint = Paint()
-      ..color = bgColor
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)),
-      badgeBgPaint,
-    );
-
-    textPainter.paint(
-      canvas,
-      Offset(badgeLeft + paddingH, badgeTop + paddingV),
-    );
   }
 
   /// 캔버스 상의 터치 좌표가 어떤 네임카드 영역에 속하는지 판정하는 히트테스트 헬퍼
@@ -234,6 +217,7 @@ class BoundingBoxPainter extends CustomPainter {
   bool shouldRepaint(covariant BoundingBoxPainter oldDelegate) {
     return oldDelegate.matches != matches ||
         oldDelegate.selectedMatchId != selectedMatchId ||
-        oldDelegate.imageSize != imageSize;
+        oldDelegate.imageSize != imageSize ||
+        oldDelegate.showSimilarity != showSimilarity;
   }
 }
