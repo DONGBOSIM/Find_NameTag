@@ -239,7 +239,19 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                AppConstants.builtBy,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 10.5,
+                  letterSpacing: 0.2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

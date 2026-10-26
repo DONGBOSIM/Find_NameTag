@@ -16,4 +16,7 @@ class AppConstants {
 
   /// 상세 버전 문자열 (예: v1.0.0 (Build 1))
   static const String fullVersionString = 'v$appVersion (Build $buildNumber)';
+
+  /// 제작/기획 크레딧
+  static const String builtBy = 'Built by 네로탱구';
 }
