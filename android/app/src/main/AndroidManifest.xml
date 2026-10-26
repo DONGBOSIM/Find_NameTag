@@ -14,7 +14,7 @@
         tools:replace="android:maxSdkVersion" />
 
     <application
-        android:label="배드민턴 명찰 찾기"
+        android:label="무한랠리 명찰 찾기"
         android:name="${applicationName}"
         android:icon="@android:drawable/sym_def_app_icon">
 

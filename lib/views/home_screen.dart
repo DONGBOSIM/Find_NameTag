@@ -34,7 +34,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 10),
             const Text(
-              '배드민턴 명찰 찾기',
+              AppConstants.appName,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,

@@ -3,7 +3,7 @@ class AppConstants {
   const AppConstants._();
 
   /// 앱 표시 이름
-  static const String appName = '배드민턴 명찰 찾기';
+  static const String appName = '무한랠리 명찰 찾기';
 
   /// 앱 버전 (Semantic Versioning)
   static const String appVersion = '1.0.0';
