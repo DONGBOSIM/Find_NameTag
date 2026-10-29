@@ -17,26 +17,37 @@ class AttendeesNotifier extends StateNotifier<AsyncValue<List<Attendee>>> {
 
   AttendeesNotifier(this._parserService) : super(const AsyncValue.data([]));
 
-  /// 캡처본 이미지 파일 경로를 받아 참석자 파싱 실행
+  /// 캡처본 단일 이미지 파일 경로를 받아 참석자 파싱 실행
   Future<void> parseFromImage(String imagePath) async {
+    await parseFromMultipleImages([imagePath]);
+  }
+
+  /// 여러 캡처본 이미지 파일 경로를 받아 순차 파싱 및 통합 누적 실행
+  Future<int> parseFromMultipleImages(List<String> imagePaths) async {
+    if (imagePaths.isEmpty) return 0;
     state = const AsyncValue.loading();
     try {
-      final parsedList = await _parserService.parseFromImagePath(imagePath);
-      // 기존 목록과 병합하되 중복 이름 방지
       final currentList = state.value ?? [];
       final existingNames = currentList.map((a) => a.name).toSet();
-
       final newAttendees = <Attendee>[...currentList];
-      for (final attendee in parsedList) {
-        if (!existingNames.contains(attendee.name)) {
-          newAttendees.add(attendee);
-          existingNames.add(attendee.name);
+      int newlyAddedCount = 0;
+
+      for (final path in imagePaths) {
+        final parsedList = await _parserService.parseFromImagePath(path);
+        for (final attendee in parsedList) {
+          if (!existingNames.contains(attendee.name)) {
+            newAttendees.add(attendee);
+            existingNames.add(attendee.name);
+            newlyAddedCount++;
+          }
         }
       }
 
       state = AsyncValue.data(newAttendees);
+      return newlyAddedCount;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 

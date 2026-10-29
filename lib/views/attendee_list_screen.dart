@@ -22,27 +22,30 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
     super.dispose();
   }
 
-  /// 갤러리에서 캡처본 이미지 선택 후 파싱
-  Future<void> _pickImageAndParse(ImageSource source) async {
+  /// 갤러리에서 여러 장의 캡처본 이미지 선택 후 파싱
+  Future<void> _pickMultiImagesFromGallery() async {
     try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: source,
+      final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(
         maxWidth: 2000,
         maxHeight: 2000,
         imageQuality: 90,
       );
 
-      if (pickedFile != null && mounted) {
-        await ref
+      if (pickedFiles.isNotEmpty && mounted) {
+        final paths = pickedFiles.map((file) => file.path).toList();
+        final addedCount = await ref
             .read(attendeesProvider.notifier)
-            .parseFromImage(pickedFile.path);
+            .parseFromMultipleImages(paths);
 
         if (mounted) {
-          final count = ref.read(attendeesProvider).value?.length ?? 0;
+          final totalCount = ref.read(attendeesProvider).value?.length ?? 0;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('캡처본에서 총 $count명의 참석자를 추출했습니다!'),
+              content: Text(
+                '캡처본 ${pickedFiles.length}장에서 새 참석자 $addedCount명을 추가했습니다! (총 $totalCount명)',
+              ),
               backgroundColor: const Color(0xFF00E5FF),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -53,6 +56,48 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
           SnackBar(
             content: Text('이미지 파싱 중 오류 발생: $e'),
             backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// 카메라로 직접 캡처본 촬영 후 파싱
+  Future<void> _pickCameraImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 90,
+      );
+
+      if (pickedFile != null && mounted) {
+        final addedCount = await ref
+            .read(attendeesProvider.notifier)
+            .parseFromMultipleImages([pickedFile.path]);
+
+        if (mounted) {
+          final totalCount = ref.read(attendeesProvider).value?.length ?? 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '촬영본에서 새 참석자 $addedCount명을 추가했습니다! (총 $totalCount명)',
+              ),
+              backgroundColor: const Color(0xFF00E5FF),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('이미지 파싱 중 오류 발생: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -124,7 +169,7 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                       child: ElevatedButton.icon(
                         onPressed: isLoading
                             ? null
-                            : () => _pickImageAndParse(ImageSource.gallery),
+                            : () => _pickMultiImagesFromGallery(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00E5FF),
                           foregroundColor: Colors.black,
@@ -135,16 +180,17 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                         ),
                         icon: const Icon(Icons.photo_library_outlined),
                         label: const Text(
-                          '투표 캡처본 불러오기',
+                          '투표 캡처본 불러오기 (여러 장 가능)',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     IconButton(
+                      tooltip: '카메라로 직접 촬영',
                       onPressed: isLoading
                           ? null
-                          : () => _pickImageAndParse(ImageSource.camera),
+                          : () => _pickCameraImage(),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFF2C3240),
                         shape: RoundedRectangleBorder(
