@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/attendees_provider.dart';
+import '../theme/app_theme.dart';
 import '../widgets/attendee_chip.dart';
 import 'board_scan_screen.dart';
 
@@ -130,16 +131,16 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
     final isLoading = attendeesState.isLoading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121418),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E222B),
+        backgroundColor: context.cardBg,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '1단계: 참석자 명단 등록',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 17,
-            color: Colors.white,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -160,7 +161,7 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
           // 캡처본 불러오기 액션 영역
           Container(
             padding: const EdgeInsets.all(16),
-            color: const Color(0xFF1E222B),
+            color: context.cardBg,
             child: Column(
               children: [
                 Row(
@@ -171,8 +172,8 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                             ? null
                             : () => _pickMultiImagesFromGallery(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00E5FF),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.primaryAccent,
+                          foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -192,13 +193,15 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                           ? null
                           : () => _pickCameraImage(),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C3240),
+                        backgroundColor: context.isDarkMode
+                            ? const Color(0xFF2C3240)
+                            : Colors.grey.shade100,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.all(14),
                       ),
-                      icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                      icon: Icon(Icons.camera_alt_outlined, color: context.textPrimary),
                     ),
                   ],
                 ),
@@ -209,27 +212,27 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                     Expanded(
                       child: TextField(
                         controller: _nameInputController,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: TextStyle(color: context.textPrimary, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: '직접 이름 추가 (예: 홍길동)',
-                          hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          hintStyle: TextStyle(color: context.textSecondary, fontSize: 13),
                           filled: true,
-                          fillColor: const Color(0xFF121418),
+                          fillColor: context.inputBg,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 12,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey.shade800),
+                            borderSide: BorderSide(color: context.cardBorder),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey.shade800),
+                            borderSide: BorderSide(color: context.cardBorder),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF00E5FF)),
+                            borderSide: BorderSide(color: context.primaryAccent),
                           ),
                         ),
                         onSubmitted: (_) => _addManualName(),
@@ -239,8 +242,10 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                     ElevatedButton(
                       onPressed: _addManualName,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C3240),
-                        foregroundColor: Colors.white,
+                        backgroundColor: context.isDarkMode
+                            ? const Color(0xFF2C3240)
+                            : Colors.grey.shade200,
+                        foregroundColor: context.textPrimary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
@@ -259,15 +264,15 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
 
           // 로딩 인디케이터
           if (isLoading)
-            const Padding(
-              padding: EdgeInsets.all(24.0),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  CircularProgressIndicator(color: Color(0xFF00E5FF)),
-                  SizedBox(height: 12),
+                  CircularProgressIndicator(color: context.primaryAccent),
+                  const SizedBox(height: 12),
                   Text(
                     '한글 OCR로 참석자 명단을 파싱하는 중...',
-                    style: TextStyle(color: Color(0xFF90A4AE), fontSize: 13),
+                    style: TextStyle(color: context.textSecondary, fontSize: 13),
                   ),
                 ],
               ),
@@ -280,16 +285,16 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
               children: [
                 Text(
                   '참석자 목록 (${attendees.length}명)',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   '칩을 터치하여 삭제 가능',
-                  style: TextStyle(color: Color(0xFF78909C), fontSize: 11),
+                  style: TextStyle(color: context.textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -305,13 +310,15 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                         Icon(
                           Icons.how_to_reg_outlined,
                           size: 56,
-                          color: Colors.grey.shade700,
+                          color: context.isDarkMode
+                              ? Colors.grey.shade700
+                              : Colors.grey.shade400,
                         ),
                         const SizedBox(height: 12),
                         Text(
                           '등록된 참석자가 없습니다.',
                           style: TextStyle(
-                            color: Colors.grey.shade500,
+                            color: context.textSecondary,
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
@@ -320,7 +327,9 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                         Text(
                           '투표 캡처본을 올리거나 상단에서 직접 추가하세요.',
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: context.isDarkMode
+                                ? Colors.grey.shade700
+                                : Colors.grey.shade500,
                             fontSize: 12,
                           ),
                         ),
@@ -351,8 +360,8 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E222B),
-              border: Border(top: BorderSide(color: Colors.grey.shade800)),
+              color: context.cardBg,
+              border: Border(top: BorderSide(color: context.cardBorder)),
             ),
             child: SafeArea(
               child: SizedBox(
@@ -368,10 +377,12 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                           );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00FF88),
-                    foregroundColor: Colors.black,
-                    disabledBackgroundColor: Colors.grey.shade800,
-                    disabledForegroundColor: Colors.grey.shade600,
+                    backgroundColor: context.secondaryAccent,
+                    foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
+                    disabledBackgroundColor: context.isDarkMode
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade300,
+                    disabledForegroundColor: Colors.grey.shade500,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

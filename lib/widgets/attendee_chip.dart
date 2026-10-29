@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/attendee.dart';
+import '../theme/app_theme.dart';
 
 /// 참석자 상태를 직관적으로 나타내는 태그 칩 위젯
 class AttendeeChip extends StatelessWidget {
@@ -22,7 +23,7 @@ class AttendeeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. 상태별 색상 및 스타일 결정
+    // 1. 상태별 색상 및 스타일 결정 (테마 반응형)
     Color backgroundColor;
     Color borderColor;
     Color textColor;
@@ -30,23 +31,31 @@ class AttendeeChip extends StatelessWidget {
 
     if (attendee.isChecked) {
       // 체크 완료(코트 꽂음) 상태
-      backgroundColor = Colors.grey.shade800;
-      borderColor = Colors.grey.shade600;
-      textColor = Colors.grey.shade400;
+      backgroundColor = context.isDarkMode
+          ? Colors.grey.shade800
+          : Colors.grey.shade200;
+      borderColor = context.isDarkMode
+          ? Colors.grey.shade600
+          : Colors.grey.shade400;
+      textColor = context.isDarkMode
+          ? Colors.grey.shade400
+          : Colors.grey.shade600;
       icon = Icons.check_circle_outline;
     } else if (attendee.isMatched) {
       // 매칭판에서 발견된 상태
+      final basePrimary = context.primaryAccent;
       backgroundColor = isSelected
-          ? const Color(0xFF00E5FF).withOpacity(0.25)
-          : const Color(0xFF00E5FF).withOpacity(0.12);
-      borderColor = isSelected ? const Color(0xFFFF9100) : const Color(0xFF00E5FF);
-      textColor = const Color(0xFF00E5FF);
+          ? basePrimary.withOpacity(context.isDarkMode ? 0.3 : 0.2)
+          : basePrimary.withOpacity(context.isDarkMode ? 0.15 : 0.1);
+      borderColor = isSelected ? context.warningAccent : basePrimary;
+      textColor = basePrimary;
       icon = Icons.location_on_outlined;
     } else {
       // 매칭판 미발견 상태
-      backgroundColor = const Color(0xFFFF9100).withOpacity(0.12);
-      borderColor = const Color(0xFFFF9100);
-      textColor = const Color(0xFFFFB74D);
+      final warning = context.warningAccent;
+      backgroundColor = warning.withOpacity(context.isDarkMode ? 0.15 : 0.1);
+      borderColor = warning;
+      textColor = warning;
       icon = Icons.warning_amber_rounded;
     }
 

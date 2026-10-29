@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_constants.dart';
 import '../providers/attendees_provider.dart';
+import '../providers/theme_provider.dart';
+import '../theme/app_theme.dart';
 import 'attendee_list_screen.dart';
 import 'board_scan_screen.dart';
 
@@ -12,11 +14,12 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final attendeesState = ref.watch(attendeesProvider);
     final attendees = attendeesState.value ?? [];
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121418),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E222B),
+        backgroundColor: context.cardBg,
         elevation: 0,
         title: Row(
           children: [
@@ -30,41 +33,41 @@ class HomeScreen extends ConsumerWidget {
                 errorBuilder: (_, __, ___) => Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00E5FF).withOpacity(0.15),
+                    color: context.primaryAccent.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.sports_tennis,
-                    color: Color(0xFF00E5FF),
+                    color: context.primaryAccent,
                     size: 20,
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               AppConstants.appName,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
-                color: Colors.white,
+                color: context.textPrimary,
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF00E5FF).withOpacity(0.12),
+                color: context.primaryAccent.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: const Color(0xFF00E5FF).withOpacity(0.4),
+                  color: context.primaryAccent.withOpacity(0.4),
                   width: 0.8,
                 ),
               ),
-              child: const Text(
+              child: Text(
                 AppConstants.versionString,
                 style: TextStyle(
-                  color: Color(0xFF00E5FF),
+                  color: context.primaryAccent,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -74,8 +77,20 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            tooltip: '화면 테마 설정',
+            icon: Icon(
+              switch (themeMode) {
+                ThemeMode.system => Icons.brightness_auto,
+                ThemeMode.light => Icons.light_mode,
+                ThemeMode.dark => Icons.dark_mode,
+              },
+              color: context.primaryAccent,
+            ),
+            onPressed: () => _showThemeSelectionModal(context, ref),
+          ),
+          IconButton(
             tooltip: '운영진 사용 가이드',
-            icon: const Icon(Icons.help_outline, color: Color(0xFF00E5FF)),
+            icon: Icon(Icons.help_outline, color: context.primaryAccent),
             onPressed: () => _showManualModal(context),
           ),
         ],
@@ -150,10 +165,10 @@ class HomeScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               '단계별 진행',
               style: TextStyle(
-                color: Colors.white,
+                color: context.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -276,6 +291,178 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
+  void _showThemeSelectionModal(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.read(themeModeProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: context.cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Icon(Icons.palette_outlined, color: context.primaryAccent, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    '화면 테마 설정',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '기본값은 안드로이드 시스템 설정에 맞추어 자동 변경됩니다.',
+                style: TextStyle(fontSize: 12, color: context.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              _buildThemeOptionTile(
+                ctx,
+                ref,
+                mode: ThemeMode.system,
+                title: '시스템 설정 연동 (기본값)',
+                subtitle: '안드로이드 휴대폰의 다크/라이트 설정에 따라 자동 전환',
+                icon: Icons.brightness_auto,
+                isSelected: currentMode == ThemeMode.system,
+              ),
+              const SizedBox(height: 8),
+              _buildThemeOptionTile(
+                ctx,
+                ref,
+                mode: ThemeMode.light,
+                title: '일반 모드 (라이트 테마)',
+                subtitle: '밝고 산뜻한 화이트 테마를 항상 유지',
+                icon: Icons.light_mode,
+                isSelected: currentMode == ThemeMode.light,
+              ),
+              const SizedBox(height: 8),
+              _buildThemeOptionTile(
+                ctx,
+                ref,
+                mode: ThemeMode.dark,
+                title: '다크 모드 (어두운 테마)',
+                subtitle: '눈부심이 적은 어두운 테마를 항상 유지',
+                icon: Icons.dark_mode,
+                isSelected: currentMode == ThemeMode.dark,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOptionTile(
+    BuildContext context,
+    WidgetRef ref, {
+    required ThemeMode mode,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    final activeColor = context.primaryAccent;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          ref.read(themeModeProvider.notifier).setThemeMode(mode);
+          Navigator.of(context).pop();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? activeColor.withOpacity(0.12)
+                : context.scaffoldBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? activeColor : context.cardBorder,
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? activeColor.withOpacity(0.2)
+                      : (context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? activeColor : context.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? activeColor : context.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(Icons.check_circle, color: activeColor, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showManualModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -287,10 +474,10 @@ class HomeScreen extends ConsumerWidget {
         maxChildSize: 0.95,
         builder: (context, scrollController) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E222B),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
+            decoration: BoxDecoration(
+              color: context.cardBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black54,
                   blurRadius: 20,
@@ -336,10 +523,10 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                const Text(
+                                Text(
                                   '운영진 현장 사용 매뉴얼',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: context.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -348,13 +535,13 @@ class HomeScreen extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF00E5FF).withOpacity(0.15),
+                                    color: context.primaryAccent.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     AppConstants.versionString,
                                     style: TextStyle(
-                                      color: Color(0xFF00E5FF),
+                                      color: context.primaryAccent,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -363,10 +550,10 @@ class HomeScreen extends ConsumerWidget {
                               ],
                             ),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
                               '체육관에서 빠르고 간편하게 명찰 찾기',
                               style: TextStyle(
-                                color: Color(0xFF90A4AE),
+                                color: context.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -375,12 +562,12 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: Icon(Icons.close, color: context.textSecondary),
                       ),
                     ],
                   ),
                 ),
-                const Divider(color: Color(0xFF2C3240), height: 1),
+                Divider(color: context.dividerColor, height: 1),
                 // 내용 스크롤 영역
                 Expanded(
                   child: ListView(
@@ -743,13 +930,22 @@ class _StepCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E222B),
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isEnabled
-                  ? accentColor.withOpacity(0.4)
-                  : Colors.grey.shade800,
+                  ? accentColor.withOpacity(context.isDarkMode ? 0.4 : 0.6)
+                  : context.cardBorder,
             ),
+            boxShadow: context.isDarkMode
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Row(
             children: [
@@ -759,13 +955,13 @@ class _StepCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isEnabled
                       ? accentColor.withOpacity(0.15)
-                      : Colors.grey.shade800,
+                      : (context.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Icon(
                     icon,
-                    color: isEnabled ? accentColor : Colors.grey.shade600,
+                    color: isEnabled ? accentColor : (context.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400),
                     size: 24,
                   ),
                 ),
@@ -780,7 +976,7 @@ class _StepCard extends StatelessWidget {
                         Text(
                           '$stepNumber단계: $title',
                           style: TextStyle(
-                            color: isEnabled ? Colors.white : Colors.grey.shade600,
+                            color: isEnabled ? context.textPrimary : context.textSecondary,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -813,8 +1009,8 @@ class _StepCard extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         color: isEnabled
-                            ? const Color(0xFF90A4AE)
-                            : Colors.grey.shade700,
+                            ? context.textSecondary
+                            : (context.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade400),
                         fontSize: 12,
                       ),
                     ),
@@ -823,7 +1019,7 @@ class _StepCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: isEnabled ? accentColor : Colors.grey.shade700,
+                color: isEnabled ? accentColor : (context.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade400),
               ),
             ],
           ),

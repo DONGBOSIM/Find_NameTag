@@ -8,6 +8,7 @@ import '../models/board_scan_result.dart';
 import '../models/name_card_match.dart';
 import '../providers/attendees_provider.dart';
 import '../providers/board_scan_provider.dart';
+import '../theme/app_theme.dart';
 import '../widgets/attendee_chip.dart';
 import '../widgets/bounding_box_painter.dart';
 import '../widgets/unmatched_warning_card.dart';
@@ -98,16 +99,16 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
     final Size imageSize = Size(result.imageWidth, result.imageHeight);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121418),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E222B),
+        backgroundColor: context.cardBg,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '매칭판 네임카드 탐색 결과',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: Colors.white,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -116,7 +117,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
             tooltip: _showSimilarity ? '매칭률 숨기기' : '매칭률(%) 표시',
             icon: Icon(
               Icons.percent,
-              color: _showSimilarity ? const Color(0xFF00E5FF) : Colors.white70,
+              color: _showSimilarity ? context.primaryAccent : context.textSecondary,
             ),
             onPressed: () {
               HapticFeedback.selectionClick();
@@ -127,7 +128,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
           ),
           IconButton(
             tooltip: '매칭판 다시 촬영',
-            icon: const Icon(Icons.camera_alt_outlined, color: Color(0xFF00FF88)),
+            icon: Icon(Icons.camera_alt_outlined, color: context.secondaryAccent),
             onPressed: () {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const BoardScanScreen()),
@@ -136,7 +137,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
           ),
           IconButton(
             tooltip: '화면 비율 리셋',
-            icon: const Icon(Icons.refresh, color: Colors.white70),
+            icon: Icon(Icons.refresh, color: context.textSecondary),
             onPressed: () {
               _transformationController.value = Matrix4.identity();
             },
@@ -309,34 +310,34 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
   Widget _buildSummaryHeader(BoardScanResult result) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: const Color(0xFF1E222B),
+      color: context.cardBg,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _statItem(
             label: '전체 참석',
             value: '${result.totalAttendeeCount}명',
-            color: Colors.white,
+            color: context.textPrimary,
           ),
           _divider(),
           _statItem(
             label: '보드판 발견',
             value: '${result.matchCount}명',
-            color: const Color(0xFF00E5FF),
+            color: context.primaryAccent,
           ),
           _divider(),
           _statItem(
             label: '코트 꽂힘(완료)',
             value: '${result.checkedCount}명',
-            color: const Color(0xFF00FF88),
+            color: context.secondaryAccent,
           ),
           _divider(),
           _statItem(
             label: '미발견',
             value: '${result.unmatchedCount}명',
             color: result.unmatchedCount > 0
-                ? const Color(0xFFFF9100)
-                : Colors.grey.shade600,
+                ? context.warningAccent
+                : context.textSecondary,
           ),
         ],
       ),
@@ -362,8 +363,8 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF90A4AE),
+          style: TextStyle(
+            color: context.textSecondary,
             fontSize: 11,
           ),
         ),
@@ -375,7 +376,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
     return Container(
       width: 1,
       height: 24,
-      color: Colors.grey.shade800,
+      color: context.dividerColor,
     );
   }
 
@@ -386,8 +387,8 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E222B),
-        border: Border(top: BorderSide(color: Colors.grey.shade800)),
+        color: context.cardBg,
+        border: Border(top: BorderSide(color: context.cardBorder)),
       ),
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: SafeArea(
@@ -400,10 +401,10 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     '오늘 참석자 목록',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: context.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -411,7 +412,7 @@ class _MatchingResultScreenState extends ConsumerState<MatchingResultScreen> {
                   const SizedBox(width: 8),
                   Text(
                     '명찰 박스나 칩을 터치하여 코트 배치(체크 완료) 토글',
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                    style: TextStyle(color: context.textSecondary, fontSize: 11),
                   ),
                 ],
               ),

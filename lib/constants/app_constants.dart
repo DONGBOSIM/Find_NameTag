@@ -6,10 +6,10 @@ class AppConstants {
   static const String appName = '무한랠리 명찰 찾기';
 
   /// 앱 버전 (Semantic Versioning)
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.1.0';
 
   /// 빌드 번호
-  static const int buildNumber = 1;
+  static const int buildNumber = 2;
 
   /// 버전 및 빌드 문자열 (예: v1.0.0)
   static const String versionString = 'v$appVersion';

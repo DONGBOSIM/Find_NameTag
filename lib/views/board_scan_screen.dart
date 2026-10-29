@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/attendees_provider.dart';
 import '../providers/board_scan_provider.dart';
+import '../theme/app_theme.dart';
 import 'matching_result_screen.dart';
 
 class BoardScanScreen extends ConsumerStatefulWidget {
@@ -76,16 +77,16 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
     final attendees = ref.watch(attendeesProvider).value ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121418),
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E222B),
+        backgroundColor: context.cardBg,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '2단계: 매칭판 촬영 및 탐색',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 17,
-            color: Colors.white,
+            color: context.textPrimary,
           ),
         ),
       ),
@@ -102,12 +103,21 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                   width: double.infinity,
                   height: 320,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E222B),
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: const Color(0xFF00FF88).withOpacity(0.6),
+                      color: context.secondaryAccent.withOpacity(0.6),
                       width: 2,
                     ),
+                    boxShadow: context.isDarkMode
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -121,25 +131,25 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                           Icon(
                             Icons.crop_free,
                             size: 64,
-                            color: const Color(0xFF00FF88).withOpacity(0.8),
+                            color: context.secondaryAccent.withOpacity(0.8),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             '체육관 매칭판 전체가 사각형 안에\n모두 들어오도록 촬영해 주세요',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: context.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               height: 1.4,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             '조명 반사가 심할 경우 살짝 비스듬히 촬영하면\n자모 퍼지 매칭 엔진이 더 잘 인식합니다.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF90A4AE),
+                              color: context.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -155,18 +165,19 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E222B),
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: context.cardBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.people, color: Color(0xFF00E5FF), size: 18),
+                      Icon(Icons.people, color: context.primaryAccent, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         '탐색 대상 참석자: ${attendees.length}명',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: context.textPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -187,13 +198,13 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                             ? null
                             : () => _captureOrPickBoard(ImageSource.camera),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00FF88),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.secondaryAccent,
+                          foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          elevation: 4,
+                          elevation: context.isDarkMode ? 4 : 1,
                         ),
                         icon: const Icon(Icons.camera_alt, size: 22),
                         label: const Text(
@@ -213,8 +224,10 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                             ? null
                             : () => _captureOrPickBoard(ImageSource.gallery),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2C3240),
-                          foregroundColor: Colors.white,
+                          backgroundColor: context.isDarkMode
+                              ? const Color(0xFF2C3240)
+                              : Colors.grey.shade200,
+                          foregroundColor: context.textPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -242,22 +255,22 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                   padding: const EdgeInsets.all(28),
                   margin: const EdgeInsets.symmetric(horizontal: 32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E222B),
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF00FF88), width: 1.5),
+                    border: Border.all(color: context.secondaryAccent, width: 1.5),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(
-                        color: Color(0xFF00FF88),
+                      CircularProgressIndicator(
+                        color: context.secondaryAccent,
                         strokeWidth: 3.5,
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'AI 네임카드 자동 탐색 중',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: context.textPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                         ),
@@ -266,8 +279,8 @@ class _BoardScanScreenState extends ConsumerState<BoardScanScreen> {
                       Text(
                         _statusMessage,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFB0BEC5),
+                        style: TextStyle(
+                          color: context.textSecondary,
                           fontSize: 13,
                         ),
                       ),
