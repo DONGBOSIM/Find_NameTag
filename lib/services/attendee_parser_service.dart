@@ -14,6 +14,7 @@ class AttendeeParserService {
 
   /// 참석자 명단에서 제외해야 할 동호회/투표 관련 블랙리스트 키워드
   static const Set<String> defaultBlacklist = {
+    // 투표 및 시스템 용어
     '투표', '참석', '마감', '취소', '불참', '정회원', '게스트',
     '총무', '모임장', '인원', '요일', '배드민턴', '클럽', '회비',
     '운동', '벙개', '월', '화', '수', '목', '금', '토', '일',
@@ -22,37 +23,55 @@ class AttendeeParserService {
     '참여', '멤버', '등록', '공지', '확인', '미정', '대기',
     '댓글', '사진', '동호회', '경기', '복식', '단식', '매칭',
     '도우미', '운영진', '매니저', '관리자', '남성', '여성',
-    '초반', '중반', '후반', '첫참여', '신규',
+    '초반', '중반', '후반', '첫참여', '신규', '참여중', '대기중',
+    '민턴', '일정', '모임',
+
+    // 주요 거주지 및 행정구역 명칭 (이름으로 오인되는 것 방지)
+    '목동', '염창동', '염창', '가양동', '가양', '등촌동', '등촌',
+    '화곡동', '화곡', '발산동', '내발산동', '외발산동', '발산',
+    '우장산동', '우장산', '공항동', '방화동', '개화동', '신월동',
+    '신정동', '양천', '강서', '구로', '신도림', '대림', '영등포',
+    '문래동', '문래', '당산동', '당산', '여의도동', '여의도',
+    '마포', '공덕', '상암동', '상암', '연희동', '연희', '신촌',
+    '홍대', '서대문', '북가좌동', '남가좌동', '가좌동', '가좌',
+    '은평', '불광', '관악구', '봉천동', '신림동', '동작', '사당',
+    '서초', '강남', '송파', '잠실', '마곡동', '마곡', '중림동',
+    '서울역', '오목교', '고척동', '인왕동', '관악',
+
+    // 일반 닉네임 단어
+    '두딸맘', '딸맘', '아들맘', '라디오', '탱구', '이즈백', '참꿈',
   };
 
   /// 2~4글자 순수 한글 이름 정규식
   static final RegExp _pureKoreanNameRegex = RegExp(r'^[가-힣]{2,4}$');
 
-  /// 괄호 내 3가지 파라미터 (이름/성별/거주지) 추출 패턴
-  /// 예: "네로탱구 (심동보/남/목동) 목3동" -> "심동보"
-  /// 예: "(이제혁/남/발산) 등촌제3동" -> "이제혁"
-  /// 예: "후추(이준호/남/목동) 연희동" -> "이준호"
-  static final RegExp _bracketProfileRegex = RegExp(
-    r'[\(\[]\s*([^/\)\]\s]{2,4})\s*\/\s*[^/\)\]\s]+\s*\/\s*[^/\)\]\s]*[\)\]]',
+  /// 닉네임 전형 접미사/패턴 (예: 두딸맘, 민우맘, 고장난라디오 등)
+  static final RegExp _nicknamePatternRegex = RegExp(
+    r'(?:맘|파파|아빠|엄마|라디오|탱구|이즈백)$',
   );
 
-  /// 괄호 없이 슬래시로 구분된 프로필 패턴 (예외 입력 지원)
-  /// 예: "김광현/남/목동 목3동" -> "김광현"
-  /// 예: "위성명/남/발산 발산제1동" -> "위성명"
+  /// 괄호 내 프로필 추출 패턴 (각종 괄호 기호 및 다양한 구분자 지원)
+  /// 예: "네로탱구 (심동보/남/목동) 목3동" -> "심동보/남/목동"
+  /// 예: "참꿈777 (김민희,남,목동) 목동" -> "김민희,남,목동"
+  /// 예: "고상난라디오(원석/남/서울역-오목교) 중림동" -> "원석/남/서울역-오목교"
+  static final RegExp _bracketContentRegex = RegExp(
+    r'[\(\[\{<（【〔]([^\)\]\}>）】\n]+)[\)\]\}>）】]?',
+  );
+
+  /// 괄호 없이 슬래시/쉼표/파이프로 구분된 프로필 패턴 (닉네임 없는 회원 지원)
+  /// 예: "위성영/남/화곡 화곡제1동" -> "위성영"
+  /// 예: "김광헌/남/목동 목3동" -> "김광헌"
   static final RegExp _slashProfileRegex = RegExp(
-    r'(?:^|\s)([가-힣]{2,4})\s*\/\s*(?:남|여|[가-힣])\s*\/',
+    r'(?:^|\s)([가-힣]{2,4})\s*[/,\|]\s*(?:남|여|남성|여성|[가-힣])(?:\s*[/,\|]|\s|$)',
   );
 
-  /// 연령대/성별 등 프로필 부가 정보 메타데이터 라인 제외 패턴
-  /// 예: "40대 초반 남성", "30대 초반 여성 · 첫 참여"
-  static final RegExp _ageGenderMetadataRegex = RegExp(
-    r'\d+대\s*(?:초반|중반|후반)?\s*(?:남성|여성)|첫\s*참여',
+  /// 연령대/성별/투표 헤더 메타데이터 라인 제외 패턴
+  /// 예: "40대 초반 남성", "30대 초반 여성 · 첫 참여", "참여 중 22", "10월 30일 금요일 민턴"
+  static final RegExp _metadataLineRegex = RegExp(
+    r'\d+대\s*(?:초반|중반|후반)?\s*(?:남성|여성)|첫\s*참여|참여\s*중\s*\d+|대기\s*중\s*\d+|\d+월\s*\d+일',
   );
 
   /// 투표 라인에서 번호, 괄호 등 수식어를 제거하고 순수 이름을 추출하기 위한 패턴
-  /// 예: "1. 홍길동 (참석)" -> "홍길동"
-  /// 예: "3) 김철수(게스트)" -> "김철수"
-  /// 예: "[정회원] 박지성" -> "박지성"
   static final RegExp _cleanPrefixSuffixRegex = RegExp(
     r'(^[0-9]+[\.\)\-\:\s]*|\[.*?\]|\(.*?\)|<.*?>)',
   );
@@ -113,53 +132,77 @@ class AttendeeParserService {
     final trimmedLine = line.trim();
     if (trimmedLine.isEmpty) return [];
 
-    // 0단계: 연령대 및 성별 메타데이터 라인("40대 초반 남성" 등)은 프로필 파라미터가 없으면 제외
-    if (_ageGenderMetadataRegex.hasMatch(trimmedLine)) {
-      if (!_bracketProfileRegex.hasMatch(trimmedLine) &&
+    // 0단계: 연령대, 성별, 투표 헤더("40대 초반 남성", "참여 중 22" 등) 라인 제외
+    if (_metadataLineRegex.hasMatch(trimmedLine)) {
+      if (!_bracketContentRegex.hasMatch(trimmedLine) &&
           !_slashProfileRegex.hasMatch(trimmedLine)) {
         return [];
       }
     }
 
-    final List<String> result = [];
-
-    // 1단계: 괄호 내 3가지 파라미터 (이름/성별/거주지) 중 첫 번째(이름) 추출 (최우선 순위)
+    // 1단계 (최우선): 닉네임 (이름/성별/거주지) 형태에서 괄호 안의 이름 추출
     // 예: "네로탱구 (심동보/남/목동) 목3동" -> "심동보"
-    // 예: "(이제혁/남/발산) 등촌제3동" -> "이제혁"
-    // 예: "후추(이준호/남/목동) 연희동" -> "이준호"
-    final bracketMatches = _bracketProfileRegex.allMatches(trimmedLine);
+    // 예: "참꿈777 (김민희,남,목동) 목동" -> "김민희"
+    // 예: "두딸맘 (김주희/여/염창동) 염창동" -> "김주희"
+    // 예: "고상난라디오(원석/남/서울역-오목교) 중림동" -> "원석"
+    final bracketMatches = _bracketContentRegex.allMatches(trimmedLine);
     for (final match in bracketMatches) {
-      final rawCandidate = match.group(1) ?? '';
+      final insideContent = match.group(1)?.trim() ?? '';
+      if (insideContent.isEmpty) continue;
+
+      // 프로필 괄호인지 판별: 구분자(/, ,, |) 또는 성별(남, 여) 키워드가 괄호 안에 존재해야 함
+      // 예: "(심동보/남/목동)", "(김민희,남,목동)" -> 프로필 괄호 (OK)
+      // 예: "(참석)", "(게스트)" -> 단순 수식어 괄호 (3단계로 위임)
+      final isProfileBracket = insideContent.contains('/') ||
+          insideContent.contains(',') ||
+          insideContent.contains('|') ||
+          insideContent.contains('\\') ||
+          RegExp(r'(?:남|여|남성|여성)').hasMatch(insideContent);
+
+      if (!isProfileBracket) {
+        continue;
+      }
+
+      // 괄호 내부를 슬래시(/), 쉼표(,), 파이프(|), 공백 등으로 분리
+      final tokens = insideContent.split(RegExp(r'[/,\|\s\.\\]+'));
+      for (final token in tokens) {
+        final cleanCandidate = token.replaceAll(RegExp(r'[^가-힣]'), '');
+        // 성별 토큰 제외
+        if (cleanCandidate == '남' || cleanCandidate == '여' ||
+            cleanCandidate == '남성' || cleanCandidate == '여성') {
+          continue;
+        }
+
+        if (isValidAttendeeName(cleanCandidate, blacklist: blacklist)) {
+          // 괄호 안에서 이름을 찾았으면 즉시 반환 (앞의 닉네임, 뒤의 거주지 오염 원천 차단)
+          return [cleanCandidate];
+        }
+      }
+
+      // 프로필 괄호였으나 유효한 이름을 찾지 못한 경우,
+      // 괄호 밖 닉네임/거주지가 이름으로 오인되는 것을 방지하기 위해 스킵
+      return [];
+    }
+
+    // 2단계: 닉네임 없는 회원 - 슬래시/쉼표로 구분된 형태 (이름/성별/거주지)
+    // 예: "위성영/남/화곡 화곡제1동" -> "위성영"
+    // 예: "김광헌/남/목동 목3동" -> "김광헌"
+    final slashMatch = _slashProfileRegex.firstMatch(trimmedLine);
+    if (slashMatch != null) {
+      final rawCandidate = slashMatch.group(1) ?? '';
       final cleanCandidate = rawCandidate.replaceAll(RegExp(r'[^가-힣]'), '');
       if (isValidAttendeeName(cleanCandidate, blacklist: blacklist)) {
-        result.add(cleanCandidate);
+        // 첫 번째 항목(이름)을 찾았으면 즉시 반환 (뒤의 거주지 오염 원천 차단)
+        return [cleanCandidate];
       }
     }
 
-    if (result.isNotEmpty) {
-      return result;
-    }
-
-    // 2단계: 괄호 없이 슬래시로 구분된 패턴 (예: "김광현/남/목동 목3동", "최재민/남/염창동")
-    final slashMatches = _slashProfileRegex.allMatches(trimmedLine);
-    for (final match in slashMatches) {
-      final rawCandidate = match.group(1) ?? '';
-      final cleanCandidate = rawCandidate.replaceAll(RegExp(r'[^가-힣]'), '');
-      if (isValidAttendeeName(cleanCandidate, blacklist: blacklist)) {
-        result.add(cleanCandidate);
-      }
-    }
-
-    if (result.isNotEmpty) {
-      return result;
-    }
-
-    // 3단계: 기존 투표 명단 파싱 (번호, 부가 괄호 등 수식어 제거 후 토큰 파싱)
+    // 3단계: 기존 단순 투표 명단 파싱 (번호, 부가 괄호 등 수식어 제거 후 토큰 파싱)
     // 예: "1. 홍길동 (참석)" -> "홍길동"
-    // 예: "3) 김철수(게스트)" -> "김철수"
+    // 예: "2) 김철수" -> "김철수"
     String cleanedLine = trimmedLine.replaceAll(_cleanPrefixSuffixRegex, ' ').trim();
 
-    // 수식어를 정제한 후에도 '도우미', '운영진', '관리자' 등 시스템/제외 키워드가 포함된 라인은 건너뜀
+    // 시스템 키워드가 포함된 라인은 건너뜀
     for (final kw in blacklist) {
       if (kw.length >= 2 && cleanedLine.contains(kw)) {
         return [];
@@ -168,6 +211,7 @@ class AttendeeParserService {
 
     // 공백이나 특수문자로 토큰 분리
     final tokens = cleanedLine.split(RegExp(r'[\s,\/\+\|]+'));
+    final List<String> result = [];
 
     for (final token in tokens) {
       // 숫자가 포함된 토큰(예: 목5동, 등촌제1동, 1등)은 인명이 아니므로 제외
@@ -203,13 +247,22 @@ class AttendeeParserService {
       return false;
     }
 
-    // 2. 블랙리스트 단어 정확 일치 검사
+    // 2. 성별 단어 단독인 경우 제외
+    if (word == '남' || word == '여' || word == '남성' || word == '여성') {
+      return false;
+    }
+
+    // 3. 블랙리스트 단어 정확 일치 검사
     if (blacklist.contains(word)) {
       return false;
     }
 
-    // 3. 블랙리스트 단어가 접두/접미사로 포함된 경우 제외 (예: "투표자", "참석자", "인원수")
-    // 단, '수', '목', '일' 등 한 글자 요일 키워드가 이름에 포함된 경우(예: '김수진', '이수현') 오탐 방지를 위해 2글자 이상 키워드만 부분 일치 검사
+    // 4. 닉네임 전형 접미사 검사 (두딸맘, 민우맘, 고장난라디오 등)
+    if (_nicknamePatternRegex.hasMatch(word)) {
+      return false;
+    }
+
+    // 5. 2글자 이상 블랙리스트 단어가 포함된 경우 제외
     for (final blacklisted in blacklist) {
       if (blacklisted.length >= 2 && word.contains(blacklisted)) {
         return false;

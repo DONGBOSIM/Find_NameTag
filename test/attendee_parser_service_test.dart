@@ -94,5 +94,44 @@ void main() {
       expect(parser.extractValidNamesFromLine('1. 홍길동 (참석)'), ['홍길동']);
       expect(parser.extractValidNamesFromLine('2) 김철수'), ['김철수']);
     });
+    test('사용자 실제 제보 투표 캡처본 20명 라인 전수 테스트', () {
+      final cases = {
+        '네로탱구 (심동보/남/목동) 목3동': '심동보',
+        '붕붕(김유진/여/목동) 목4동': '김유진',
+        '팅클언 (효선/여/목동) 목3동': '효선',
+        '하루 (박우진/남/염창동) 가양제3동': '박우진',
+        '참꿈777 (김민희,남,목동) 목동': '김민희',
+        '후후(이준호/남/목동) 연희동': '이준호',
+        '이즈백 (재호/남/강서) 우장산동': '재호',
+        '아키 (윤영미/여/내발산동) 내발산동': '윤영미',
+        '위성영/남/화곡 화곡제1동': '위성영',
+        '고상난라디오(원석/남/서울역-오목교) 중림동': '원석',
+        '두딸맘 (김주희/여/염창동) 염창동': '김주희',
+        '주노(황순호/남/북가좌동) 북가좌동': '황순호',
+        '이르니크(정진우/남/목동) 여의도동': '정진우',
+        '김광헌/남/목동 목3동': '김광헌',
+        '심중용 (심중용/남/목동) 목2동': '심중용',
+        '리사 (박유준/여/목동) 염창동': '박유준',
+        '팡꺽 (이광호/남/관악구) 봉천동': '이광호',
+        '퀄림(엄채린/여/강서) 등촌동': '엄채린',
+        '이승우(이승우/남/목동) 목2동': '이승우',
+        '대쉬(김선호/남/목2동) 목2동': '김선호',
+      };
+
+      for (final entry in cases.entries) {
+        final result = parser.extractValidNamesFromLine(entry.key);
+        expect(result, [entry.value], reason: '실패한 라인: ${entry.key}');
+      }
+    });
+
+    test('사용자 실제 제보 투표 캡처본 - 닉네임과 거주지만 단독으로 들어오는 경우 이름으로 오인 방지', () {
+      expect(parser.extractValidNamesFromLine('두딸맘'), isEmpty);
+      expect(parser.extractValidNamesFromLine('목동'), isEmpty);
+      expect(parser.extractValidNamesFromLine('염창동'), isEmpty);
+      expect(parser.extractValidNamesFromLine('화곡제1동'), isEmpty);
+      expect(parser.extractValidNamesFromLine('연희동'), isEmpty);
+      expect(parser.extractValidNamesFromLine('참여 중 22'), isEmpty);
+      expect(parser.extractValidNamesFromLine('대기 중 0'), isEmpty);
+    });
   });
 }
