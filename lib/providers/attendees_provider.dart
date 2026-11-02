@@ -70,6 +70,28 @@ class AttendeesNotifier extends StateNotifier<AsyncValue<List<Attendee>>> {
     return true;
   }
 
+  /// 참석자 이름 수정
+  bool updateAttendeeName(String id, String newName) {
+    final cleanName = newName.trim();
+    if (cleanName.isEmpty) return false;
+
+    final currentList = state.value ?? [];
+    // 다른 참석자 중에 동일한 이름이 이미 있는지 확인 (자기 자신 제외)
+    if (currentList.any((a) => a.id != id && a.name == cleanName)) {
+      return false; // 중복 이름 존재
+    }
+
+    state = AsyncValue.data(
+      currentList.map((a) {
+        if (a.id == id) {
+          return a.copyWith(name: cleanName);
+        }
+        return a;
+      }).toList(),
+    );
+    return true;
+  }
+
   /// 참석자 삭제
   void removeAttendee(String id) {
     final currentList = state.value ?? [];

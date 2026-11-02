@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../models/attendee.dart';
 import '../providers/attendees_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/attendee_chip.dart';
@@ -27,9 +28,9 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
   Future<void> _pickMultiImagesFromGallery() async {
     try {
       final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageQuality: 90,
+        maxWidth: 4000,
+        maxHeight: 4000,
+        imageQuality: 100,
       );
 
       if (pickedFiles.isNotEmpty && mounted) {
@@ -69,9 +70,9 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageQuality: 90,
+        maxWidth: 4000,
+        maxHeight: 4000,
+        imageQuality: 100,
       );
 
       if (pickedFile != null && mounted) {
@@ -102,6 +103,116 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
           ),
         );
       }
+    }
+  }
+
+  /// 참석자 이름 수정 다이얼로그
+  void _showEditNameDialog(BuildContext context, Attendee attendee) {
+    final editController = TextEditingController(text: attendee.name);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: context.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: context.cardBorder),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.edit_note, color: context.primaryAccent, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                '참석자 이름 수정',
+                style: TextStyle(
+                  color: context.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'OCR로 인식된 이름을 올바른 이름으로 변경합니다.',
+                style: TextStyle(color: context.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: editController,
+                autofocus: true,
+                style: TextStyle(color: context.textPrimary, fontSize: 15),
+                decoration: InputDecoration(
+                  labelText: '이름',
+                  labelStyle: TextStyle(color: context.primaryAccent),
+                  filled: true,
+                  fillColor: context.inputBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: context.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: context.primaryAccent),
+                  ),
+                ),
+                onSubmitted: (val) {
+                  _saveEditedName(dialogCtx, attendee.id, val);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text('취소', style: TextStyle(color: context.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.primaryAccent,
+                foregroundColor: context.isDarkMode ? Colors.black : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                _saveEditedName(dialogCtx, attendee.id, editController.text);
+              },
+              child: const Text('수정 완료'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _saveEditedName(BuildContext dialogCtx, String id, String newName) {
+    final cleanName = newName.trim();
+    if (cleanName.isEmpty) return;
+
+    final success = ref.read(attendeesProvider.notifier).updateAttendeeName(id, cleanName);
+    Navigator.of(dialogCtx).pop();
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('참석자 이름을 "$cleanName"(으)로 수정했습니다.'),
+          backgroundColor: const Color(0xFF00E5FF),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('이미 등록되어 있는 이름입니다.'),
+          backgroundColor: Color(0xFFFF9100),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -293,7 +404,7 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  '칩을 터치하여 삭제 가능',
+                  '칩을 터치하여 이름 수정 (X는 삭제)',
                   style: TextStyle(color: context.textSecondary, fontSize: 11),
                 ),
               ],
@@ -345,6 +456,7 @@ class _AttendeeListScreenState extends ConsumerState<AttendeeListScreen> {
                         return AttendeeChip(
                           attendee: attendee,
                           showDeleteButton: true,
+                          onTap: () => _showEditNameDialog(context, attendee),
                           onDelete: () {
                             ref
                                 .read(attendeesProvider.notifier)
